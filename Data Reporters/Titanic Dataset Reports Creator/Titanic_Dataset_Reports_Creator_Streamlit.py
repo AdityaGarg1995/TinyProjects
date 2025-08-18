@@ -25,9 +25,9 @@ import streamlit as st
 
 import altair as alt
 
-### List of frequently used strings
+## List of frequently used strings
 
-#### Dataframe Column Names
+### Dataframe Column Names
 AGE = "Age"
 SEX = 'Sex'
 EMBARKED = "Embarked"
@@ -36,53 +36,67 @@ PARENTS_CHILDREN_ABOARD = "Parents/Children Aboard"
 SURVIVED = "Survived"
 PASSENGER_CLASS = "Passenger Class"
 
-METRICS_LIST = tuple((AGE, SEX, EMBARKED, PASSENGER_CLASS))
-
-
-#### Custom Columns
+### Custom Columns
 FAMILY_SIZE = "FamilySize"
 
 
-#### Important Statistics Strings
+### Important Statistics Strings
 SURVIVAL_RATE = "Survival Rate"
 AVERAGE_AGE = "Average Age"
 PASSENGER_CLASS_COUNTS = "Passenger Class Counts"
 EMBARKING_PORT_COUNTS = "Embarking Port Counts"
 SEX_COUNTS = "Sex Counts"
 
-#### Helper Strings
-FILTER_BY = "Filter By"
-ALL = "All"
-SELECT = "Select"
 
-
-### Dataframe categorical values and lists
+### DataFrame Categorical Value Strings
 #### Port Names
 CHERBOURG = "Cherbourg"
 QUEENSTOWN = "Queenstown"
 SOUTHAMPTON = "Southampton"
-PORT_NAMES_LIST = (ALL, CHERBOURG, QUEENSTOWN, SOUTHAMPTON)
+EMBARKING_PORT = "Embarking Port"
 
 #### Passenger Classes
 FIRST_CLASS = "1st Class"
 SECOND_CLASS = "2nd Class"
 THIRD_CLASS = "3rd Class"
-PASSENGER_CLASSES_LIST = (ALL, FIRST_CLASS, SECOND_CLASS, THIRD_CLASS)
+
 
 #### Sexes
 MALE = "male"
 FEMALE = "female"
 
+
+### Helper Strings
+FILTER_BY = "Filter By"
+ALL = "All"
+SELECT = "Select"
+
 MALES = "Males"
 FEMALES = "Females"
-SEXES_LIST = (ALL, MALES, FEMALES)
 
 
+## DataFrame Metrics and Values Lists
+
+### DataFrame Metrics List
+METRICS_LIST = tuple((AGE, SEX, EMBARKED, PASSENGER_CLASS))
+
+### DataFrame Categorical Values Lists
+PORT_NAMES_LIST =  tuple((ALL, CHERBOURG, QUEENSTOWN, SOUTHAMPTON))
+PASSENGER_CLASSES_LIST =  tuple((ALL, FIRST_CLASS, SECOND_CLASS, THIRD_CLASS))
+SEXES_LIST =  tuple((ALL, MALES, FEMALES))
+
+
+
+## Data Operations Functions
+### DataSet loading function
 def load_titanic_data(filepath=r'TinyProjects\Data Reporters\Titanic Dataset Reports Creator\titanic.csv'):
     return pd.read_csv(filepath)
 
 
-### Null filler functions
+
+### Preprocessing Functions
+
+#### Null filler functions
 def fillna_median(dataseries: pd.Series):
     return dataseries.fillna(dataseries.median())
 
@@ -94,18 +108,19 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     df[AGE] = fillna_median(df[AGE])
 
     df[EMBARKED] = fillna_mode(df[EMBARKED])
-    df[EMBARKED] = df[EMBARKED].map({'S': "Southampton", 'C': "Cherbourg", 'Q': "Queenstown"})
+    df[EMBARKED] = df[EMBARKED].map({'S': SOUTHAMPTON, 'C': CHERBOURG, 'Q': QUEENSTOWN})
     
     # df[SEX] = df[SEX].map({MALE: 0, FEMALE: 1})
     
-    df[PASSENGER_CLASS] = df[PASSENGER_CLASS].map({1: "1st Class", 2: "2nd Class", 3: "3rd Class"})
+    df[PASSENGER_CLASS] = df[PASSENGER_CLASS].map({1: FIRST_CLASS, 2: SECOND_CLASS, 3: THIRD_CLASS})
 
     df[FAMILY_SIZE] = df[SIBLINGS_SPOUSE_ABOARD] + df[PARENTS_CHILDREN_ABOARD] + 1
     
     return df
 
 
-def generate_metrics(df):
+### Metrics Generation Functions
+def generate_metrics(df:pd.DataFrame) -> dict:
     avg_age = df[AGE].mean()
     pclass_counts = df[PASSENGER_CLASS].value_counts()
     embarking_port_counts = df[EMBARKED].value_counts()
@@ -117,7 +132,6 @@ def generate_metrics(df):
         EMBARKING_PORT_COUNTS : embarking_port_counts,
         SEX_COUNTS : sex_counts
     }
-
 
 def total_survival_rate(df: pd.DataFrame) -> str:
     return f"Total {SURVIVAL_RATE} for all passengers: {df[SURVIVED].mean()*100:.2f}%"
@@ -145,7 +159,7 @@ def main():
 
     metrics_selection = st.selectbox("Choose a metric:", METRICS_LIST)
 
-    st.header(f"{FILTER_BY} {metrics_selection}")
+    st.html(f"<h2>{FILTER_BY} {metrics_selection}</h2>")
     
     if (metrics_selection == SEX):
         """
@@ -177,7 +191,7 @@ def main():
         Show statistics based on Passenger Embarking Port metric
         """
 
-        embarked_filter = st.radio(f"{SELECT} Embarking Port:", PORT_NAMES_LIST)
+        embarked_filter = st.radio(f"{SELECT} {EMBARKING_PORT}:", PORT_NAMES_LIST)
 
         if embarked_filter != ALL:
             filtered_df = df[df[EMBARKED] == embarked_filter]
@@ -188,12 +202,12 @@ def main():
             st.write(df)
 
         source = pd.DataFrame({
-                "Embarking Port" : metrics[EMBARKING_PORT_COUNTS].index,
+                f"{EMBARKING_PORT}" : metrics[EMBARKING_PORT_COUNTS].index,
                 "Embarking Passenger Counts" : metrics[EMBARKING_PORT_COUNTS]
             }
         )
         altair_chart = alt.Chart(source).mark_bar().encode(
-            x = alt.X("Embarking Port", axis=alt.Axis(labelAngle=0)),
+            x = alt.X(f"{EMBARKING_PORT}", axis=alt.Axis(labelAngle=0)),
             y = "Embarking Passenger Counts"
         )
         st.altair_chart(altair_chart)
@@ -206,11 +220,6 @@ def main():
         passenger_class_filter = st.radio(f"{SELECT} {PASSENGER_CLASS}:", PASSENGER_CLASSES_LIST)
         
         if (passenger_class_filter != ALL):
-            # passenger_class_dict = {
-            #     "1st Class" : 1, 
-            #     "2nd Class" : 2, 
-            #     "3rd Class" : 3,
-            # }
             filtered_df = df[df[PASSENGER_CLASS] == passenger_class_filter]
             st.write(filtered_df)
             st.write(filtered_survival_rate(filtered_df, passenger_class_filter))
@@ -221,13 +230,13 @@ def main():
         #              x_label="Passenger Classes", y_label="Survival Count by Passenger Class", 
         #              color=None, horizontal=False, stack=None, width=None, height=None, use_container_width=True)
         source = pd.DataFrame({
-                "Passenger Class" : metrics[PASSENGER_CLASS_COUNTS].index,
-                "Survival Count by Passenger Class" : metrics[PASSENGER_CLASS_COUNTS]
+                PASSENGER_CLASS : metrics[PASSENGER_CLASS_COUNTS].index,
+                f"Survival Count by {PASSENGER_CLASS}" : metrics[PASSENGER_CLASS_COUNTS]
             }
         )
         altair_chart = alt.Chart(source).mark_bar().encode(
-            x = alt.X("Passenger Class", axis=alt.Axis(labelAngle=0)),
-            y = "Survival Count by Passenger Class"
+            x = alt.X(PASSENGER_CLASS, axis=alt.Axis(labelAngle=0)),
+            y = f"Survival Count by {PASSENGER_CLASS}"
         )
         st.altair_chart(altair_chart)
     
@@ -271,9 +280,11 @@ def main():
         
     
     
-        
-        
+
 
 if __name__ == "__main__":
     main()
-
+    # df = load_titanic_data(filepath=r'TinyProjects\Data Reporters\Titanic Dataset Reports Creator\titanic.csv')
+    # df = preprocess(df)
+    # metrics = generate_metrics(df)
+    # print(metrics)
