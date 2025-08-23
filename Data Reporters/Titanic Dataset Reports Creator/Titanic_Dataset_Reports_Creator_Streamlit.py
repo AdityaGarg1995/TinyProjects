@@ -2,7 +2,7 @@
 Creates reports from Titanic Dataset using following python libraries:
 * Streamlit : Web UI
 * pandas : data processing
-* matplotlib : charts / graph creation
+* altair : charts / graph creation
 
 #####
 Dataset Description
@@ -22,7 +22,6 @@ in his post: https://databytesandinsights.substack.com/p/day-50-of-50-days-of-py
 
 import pandas as pd
 import streamlit as st
-
 import altair as alt
 
 ## List of frequently used strings
@@ -74,6 +73,10 @@ SELECT = "Select"
 MALES = "Males"
 FEMALES = "Females"
 
+SEXES = "Sexes"
+SEX_SELECTION = "Sex (Male/Female)"
+
+SURVIVOR_COUNT_BY = "Survivor Count by"
 
 ## DataFrame Metrics and Values Lists
 
@@ -175,13 +178,14 @@ def main():
             st.write(df)
            
         source = pd.DataFrame({
-                "Sexes" : metrics[SEX_COUNTS].index,
-                "Passenger Count by Sex (Male/Female)" : metrics[SEX_COUNTS]
+                SEXES : metrics[SEX_COUNTS].index,
+                f"{SURVIVOR_COUNT_BY} {SEX_SELECTION}" : metrics[SEX_COUNTS]
             }
         )
         altair_chart = alt.Chart(source).mark_bar().encode(
-            x = alt.X("Sexes", axis=alt.Axis(labelAngle=0)),
-            y = "Passenger Count by Sex (Male/Female)"
+            x = alt.X(SEXES, axis=alt.Axis(labelAngle=0)),
+            y = f"{SURVIVOR_COUNT_BY} {SEX_SELECTION}"
+
         )
         st.altair_chart(altair_chart)
     
@@ -203,12 +207,12 @@ def main():
 
         source = pd.DataFrame({
                 f"{EMBARKING_PORT}" : metrics[EMBARKING_PORT_COUNTS].index,
-                "Embarking Passenger Counts" : metrics[EMBARKING_PORT_COUNTS]
+                f"{SURVIVOR_COUNT_BY} {EMBARKING_PORT}" : metrics[EMBARKING_PORT_COUNTS]
             }
         )
         altair_chart = alt.Chart(source).mark_bar().encode(
             x = alt.X(f"{EMBARKING_PORT}", axis=alt.Axis(labelAngle=0)),
-            y = "Embarking Passenger Counts"
+            y = f"{SURVIVOR_COUNT_BY} {EMBARKING_PORT}"
         )
         st.altair_chart(altair_chart)
         
@@ -231,12 +235,12 @@ def main():
         #              color=None, horizontal=False, stack=None, width=None, height=None, use_container_width=True)
         source = pd.DataFrame({
                 PASSENGER_CLASS : metrics[PASSENGER_CLASS_COUNTS].index,
-                f"Survival Count by {PASSENGER_CLASS}" : metrics[PASSENGER_CLASS_COUNTS]
+                f"{SURVIVOR_COUNT_BY} {PASSENGER_CLASS}" : metrics[PASSENGER_CLASS_COUNTS]
             }
         )
         altair_chart = alt.Chart(source).mark_bar().encode(
             x = alt.X(PASSENGER_CLASS, axis=alt.Axis(labelAngle=0)),
-            y = f"Survival Count by {PASSENGER_CLASS}"
+            y = f"{SURVIVOR_COUNT_BY} {PASSENGER_CLASS}"
         )
         st.altair_chart(altair_chart)
     
@@ -245,32 +249,34 @@ def main():
         """
         Show statistics based on Passenger Age metric
         """
-        age_filter = st.radio(f"{SELECT} {AGE}:", 
-                              (ALL, "Adults (>18 years)", "Minors (<18 years)", "Infants (0-1 years)", "Toddlers (1-3 years)", "Pre-Adolescents (3-13 years)", "Adolescents (13-18 years)"))
+
+        ages_list = tuple((ALL, "Adults (>18 years)", "Minors (<18 years)", "Infants (0-1 years)", "Toddlers (1-3 years)", "Pre-Adolescents (3-13 years)", "Adolescents (13-18 years)"))
+
+        age_filter = st.radio(f"{SELECT} {AGE}:", ages_list)
         
         if (age_filter != ALL):
             filtered_df = pd.Series()
-            if (age_filter == "Adults (>18 years)"):
+            if (age_filter == ages_list[1]):
                 filtered_df = df[df[AGE] > 18]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
-            elif (age_filter == "Minors (<18 years)"):
+            elif (age_filter == ages_list[2]):
                 filtered_df = df[df[AGE] < 18]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
-            elif (age_filter == "Infants (0-1 years)"):
+            elif (age_filter == ages_list[3]):
                 filtered_df = df[df[AGE].isin([0, 1])]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
-            elif (age_filter == "Toddlers (1-3 years)"):
+            elif (age_filter == ages_list[4]):
                 filtered_df = df[df[AGE].isin([1, 3])]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
-            elif (age_filter == "Pre-Adolescents (3-13 years)"):
+            elif (age_filter == ages_list[5]):
                 filtered_df = df[df[AGE].isin([3, 13])]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
-            elif (age_filter == "Adolescents (13-18 years)"):
+            elif (age_filter == ages_list[6]):
                 filtered_df = df[df[AGE].isin([13, 18])]
                 st.write(filtered_df)
                 st.write(filtered_survival_rate(filtered_df, age_filter))
