@@ -1,9 +1,16 @@
+""" 
+    This is a Tkinter based measurement converter that converts between different measurement units of same type.
+    (eg. metre to centimetre).
+
+    Tkinter UI allows choosing desired measurement type, source unit, target unit and source unit measurement amount.
+"""
+
+
 import tkinter as tk
 from tkinter import ttk
 
 
 """ 
-    @Docstring
     Dictionaries to define measurement unit mapping.
     Each mapping assumes one standard unit (metre, square metre, grams, sec, Pascals, degrees) 
     and defines other units based on that.
@@ -67,10 +74,21 @@ TEMPERATURE_STRING = 'Temperature'
 
 VALUES_STRING = 'values'
 
+## Contant values
+KELVIN_CONSTANT = 273.15   ### Constant for temperature conversion to Kelvin
+
 
 ## Helper Functions
+
+### General measurement conversion
 def measurement_conversion_calculator(convert_measure:dict, value:float, first_unit:float, second_unit:float) -> float:
     return value * convert_measure[first_unit] / convert_measure[second_unit]
+
+### Temperature conversion functions
+def celsius_fahrenheit_conversion(temperature):
+    return (temperature * 9/5) + 32
+def fahrenheit_celsius_conversion(temperature):
+    return (temperature - 32) * 5/9
 
 
 class Measurement_Converter(tk.Tk):
@@ -90,7 +108,7 @@ class Measurement_Converter(tk.Tk):
             WEIGHT_STRING : self.massConversion,
             PRESSURE_STRING : self.pressureConversion,
             ANGLE_STRING : self.angleConversion,
-            TEMPERATURE_STRING : self.tempConversion,
+            TEMPERATURE_STRING : self.temperatureConversion,
         }
 
         self.type = ttk.Label(self, text="Measurement Type: ")
@@ -150,7 +168,7 @@ class Measurement_Converter(tk.Tk):
         elif typesMeasurement == WEIGHT_STRING:
             units = tuple(weight_dict.keys())
         elif typesMeasurement == TEMPERATURE_STRING:
-            units = ('C', 'F', 'K')
+            units = ('°C', '°F', 'K')
         elif typesMeasurement == ANGLE_STRING:
             units = tuple(angle_dict.keys())
         elif typesMeasurement == PRESSURE_STRING:
@@ -200,24 +218,25 @@ class Measurement_Converter(tk.Tk):
     def pressureConversion(self, value, first_unit, second_unit):
         convert_measure = pressure_dict
         return measurement_conversion_calculator(convert_measure, value, first_unit, second_unit)
-    
-    def tempConversion(self, value, first_unit, second_unit):
-        if first_unit == 'C':
-            if second_unit == 'F':
-                return value * 9/5 + 32
-            elif second_unit == 'K':
-                return value + 273.15
-        elif first_unit == 'F':
-            if second_unit == 'C':
-                return (value - 32) * 5/9
-            elif second_unit == 'K':
-                return (value - 32) * 5/9 + 273.15
-        elif first_unit == 'K':
-            if second_unit == 'C':
-                return value - 273.15
-            elif second_unit == 'F':
-                return (value - 273.15) * 9/5 + 32
 
+    
+    def temperatureConversion(self, value, first_unit, second_unit):
+        if first_unit == '°C':
+            if second_unit == '°F':
+                return celsius_fahrenheit_conversion(value)
+            elif second_unit == 'K':
+                return value + KELVIN_CONSTANT
+        elif first_unit == '°F':
+            if second_unit == '°C':
+                return fahrenheit_celsius_conversion(value)
+            elif second_unit == 'K':
+                return fahrenheit_celsius_conversion(value) + KELVIN_CONSTANT
+        elif first_unit == 'K':
+            if second_unit == '°C':
+                return value - KELVIN_CONSTANT 
+            elif second_unit == '°F':
+                return celsius_fahrenheit_conversion(value - KELVIN_CONSTANT)
+                
 
 if __name__ == "__main__":
     app = Measurement_Converter()
