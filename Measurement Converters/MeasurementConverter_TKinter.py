@@ -100,6 +100,7 @@ class Measurement_Converter(tk.Tk):
         super().__init__()
         self.title("Measurement Converter")
         self.geometry("400x300")
+        self.resizable(True, True)
 
         self.conversionFunctions = {
             LENGTH_STRING : self.lengthConversion,
