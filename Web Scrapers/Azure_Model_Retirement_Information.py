@@ -7,10 +7,10 @@ import requests
 from bs4 import BeautifulSoup
 
 import pandas as pd
-import openpyxl
 
 from datetime import datetime, timedelta
 
+import logging
 
 ## Helper Strings
 MODEL_NAME = "Model Name"
@@ -22,6 +22,18 @@ MODEL_RETIREMENT_DATE_90DAYS = 'Model Retiring in 90 Days?'
 
 NO_EARLIER_THAN = "No earlier than "
 
+
+import GenAI_Model_Details_Constants
+import GenAI_Model_Details_Assistant_Functions
+
+from GenAI_Model_Details_Assistant_Functions import column_text_extracter
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
 ## Helper Functions
 def highlight_rows(df):
     # Highlight rows where MODEL_RETIREMENT_DATE_90DAYS column is True in Yellow
@@ -30,10 +42,7 @@ def highlight_rows(df):
     return ['background-color: yellow' if models_retiring_in_90days.any() else '' for model in models_retiring_in_90days]
 
 
-def azure_model_retirement_checker() -> pd.DataFrame:
-    # URL of Official Azure OpenAI models lifecycle page
-    url = "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/model-retirements"
-
+def azure_model_retirement_checker(url: str) -> pd.DataFrame:
     # Fetch the webpage content
     response = requests.get(url, timeout=60)
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -50,14 +59,14 @@ def azure_model_retirement_checker() -> pd.DataFrame:
         rows = table.find_all('tr')
         
         for row in rows[1:]:  # Skip the header row
-            cols = row.find_all('td')
+            columns = row.find_all('td')
 
-            if len(cols) >= 5:  # Ensure there are enough columns
-                model_name = cols[0].text.strip()
-                model_version = cols[1].text.strip()
-                lifecycle_status = cols[2].text.strip()
-                retirement_date = cols[3].text.strip()
-                recommended_replacement = cols[4].text.strip()
+            if len(columns) >= 5:  # Ensure there are enough columns
+                model_name = column_text_extracter(columns[0]) #columns[0].text.strip()
+                model_version = column_text_extracter(columns[1]) #columns[1].text.strip()
+                lifecycle_status = column_text_extracter(columns[2]) #columns[2].text.strip()
+                retirement_date = column_text_extracter(columns[3]) #columns[3].text.strip()
+                recommended_replacement = column_text_extracter(columns[4]) #columns[4].text.strip()
 
 
                 # Check if the model is retiring in 90 days -->> Keep retiring_in_90_days as False by default
@@ -102,6 +111,6 @@ def save_azure_model_retirement_information(model_dataframe: pd.DataFrame, excel
 
 
 if __name__ == "__main__":
-    azure_model_dataframe = azure_model_retirement_checker()
+    azure_model_dataframe = azure_model_retirement_checker(GenAI_Model_Details_Constants.AZURE_OPENAI_MODEL_LIFECYCLE_PAGE_URL)
     azure_model_dataframe = azure_model_dataframe.style.apply(highlight_rows, axis=1)
     save_azure_model_retirement_information (azure_model_dataframe, "azure_openai_models_lifecycle.xlsx")
