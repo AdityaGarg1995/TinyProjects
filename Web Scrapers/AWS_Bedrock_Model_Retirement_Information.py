@@ -6,26 +6,17 @@ import pandas as pd
 import logging
 
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-
-## Helper Strings
-MODEL_NAME = "Model Name"
-MODEL_VERSION = "Model Version"
-MODEL_PROVIDER_NAME = "Model Provider Name"
-MODEL_LIFECYCLE_STATUS = "Model Lifecycle Status (Preview / GA)"
-RECOMMENDED_REPLACEMENT_MODEL = "Recommended Replacement Model"
-MODEL_RETIREMENT_DATE = "Model Retirement Date"
-MODEL_RETIREMENT_DATE_90DAYS = 'Model Retiring in 90 Days?'
-
-NO_SOONER_THAT = "No sooner that "
-
-import GenAI_Model_Details_Constants
-import GenAI_Model_Details_Assistant_Functions
+## Import Helper Strings and Helper Functions
+from GenAI_Model_Details_Constants import (AWS_BEDROCK_MODEL_LIFECYCLE_PAGE_URL,
+                                           MODEL_NAME,
+                                           MODEL_RETIREMENT_DATE,
+                                           MODEL_VERSION,
+                                           MODEL_PROVIDER_NAME,
+                                           RECOMMENDED_REPLACEMENT_MODEL,
+                                           NO_SOONER_THAT)
 
 from GenAI_Model_Details_Assistant_Functions import column_text_extracter
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -125,9 +116,8 @@ def get_aws_legacy_models_data(aws_legacy_models_table) -> pd.DataFrame:
     return pd.DataFrame(model_data)
 
 
-def aws_model_retirement_checker():
-    # Official AWS Bedrock models lifecycle page URL
-    url = "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+## Main function to extract and save AWS Bedrock Models retirement information
+def aws_model_retirement_information_extractor(url: str):
 
     # Fetch the webpage content
     response = requests.get(url, timeout=60)
@@ -140,39 +130,15 @@ def aws_model_retirement_checker():
 
     aws_legacy_models_table = get_aws_legacy_models(soup)
     aws_legacy_models_dataframe = get_aws_active_models_data(aws_legacy_models_table)
-
-    # # Iterate through each table
-    # for table in aws_active_models_table:
-    #     rows = table.find_all('tr')
-    #     print(rows[0])
-    
-    # for table in aws_legacy_models_table:
-    #     rows = table.find_all('tr')
-    #     print(rows[0])
-
-    print(aws_active_models_dataframe)
-    print(aws_legacy_models_dataframe)
         
     with pd.ExcelWriter('aws_bedrock_models_lifecycle.xlsx', engine='openpyxl') as writer:
         # Write each DataFrame to a different sheet
         aws_active_models_dataframe.to_excel(writer, sheet_name='Active Models Retirement Details', index=False)
         aws_legacy_models_dataframe.to_excel(writer, sheet_name='Legacy Models Retirement Details', index=False)
-       
-    
-
-def save_aws_model_retirement_information(model_dataframe: pd.DataFrame, excel_file) -> None:
-    # Save the DataFrame to an Excel file
-    model_dataframe.to_excel(excel_file, index=False)
-    print(f"Data has been saved to {excel_file}")
-
 
 
 if __name__ == "__main__":
-    # aws_model_dataframe = aws_model_retirement_checker()
-    # aws_model_dataframe = aws_model_dataframe.style.apply(highlight_rows, axis=1)
-    # save_aws_model_retirement_information (aws_model_dataframe, "aws_openai_models_lifecycle.xlsx")
-
-    aws_model_retirement_checker()
-
+    aws_model_retirement_information_extractor(AWS_BEDROCK_MODEL_LIFECYCLE_PAGE_URL)
+    
 
    

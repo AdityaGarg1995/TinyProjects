@@ -12,19 +12,16 @@ from datetime import datetime, timedelta
 
 import logging
 
-## Helper Strings
-MODEL_NAME = "Model Name"
-MODEL_VERSION = "Model Version"
-MODEL_LIFECYCLE_STATUS = "Model Lifecycle Status (Preview / GA)"
-RECOMMENDED_REPLACEMENT_MODEL = "Recommended Replacement Model"
-MODEL_RETIREMENT_DATE = "Model Retirement Date"
-MODEL_RETIREMENT_DATE_90DAYS = 'Model Retiring in 90 Days?'
 
-NO_EARLIER_THAN = "No earlier than "
-
-
-import GenAI_Model_Details_Constants
-import GenAI_Model_Details_Assistant_Functions
+## Import Helper Strings and Helper Functions
+from GenAI_Model_Details_Constants import (AZURE_OPENAI_MODEL_LIFECYCLE_PAGE_URL,
+                                           MODEL_NAME,
+                                           MODEL_LIFECYCLE_STATUS,
+                                           MODEL_RETIREMENT_DATE,
+                                           MODEL_VERSION,
+                                           RECOMMENDED_REPLACEMENT_MODEL,
+                                           MODEL_RETIREMENT_DATE_90DAYS,
+                                           NO_EARLIER_THAN)
 
 from GenAI_Model_Details_Assistant_Functions import column_text_extracter
 
@@ -42,7 +39,8 @@ def highlight_rows(df):
     return ['background-color: yellow' if models_retiring_in_90days.any() else '' for model in models_retiring_in_90days]
 
 
-def azure_model_retirement_checker(url: str) -> pd.DataFrame:
+## Main function to extract and Azure OpenAI Models retirement information
+def azure_model_retirement_information_extractor(url: str) -> pd.DataFrame:
     # Fetch the webpage content
     response = requests.get(url, timeout=60)
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -111,6 +109,6 @@ def save_azure_model_retirement_information(model_dataframe: pd.DataFrame, excel
 
 
 if __name__ == "__main__":
-    azure_model_dataframe = azure_model_retirement_checker(GenAI_Model_Details_Constants.AZURE_OPENAI_MODEL_LIFECYCLE_PAGE_URL)
+    azure_model_dataframe = azure_model_retirement_information_extractor(AZURE_OPENAI_MODEL_LIFECYCLE_PAGE_URL)
     azure_model_dataframe = azure_model_dataframe.style.apply(highlight_rows, axis=1)
     save_azure_model_retirement_information (azure_model_dataframe, "azure_openai_models_lifecycle.xlsx")
