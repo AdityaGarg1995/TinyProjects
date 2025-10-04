@@ -3,6 +3,9 @@
     (eg. metre to centimetre).
 
     Tkinter UI allows choosing desired measurement type, source unit, target unit and source unit measurement amount.
+
+    This program is is based on the program given in the post https://projectsflood.com/create-a-measurement-converter-using-python-94887ba40860
+    created by by Rahul Patodi in the Medium Publication https://projectsflood.com/.
 """
 
 
